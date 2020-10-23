@@ -3,14 +3,12 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-Packages
-_PackageInt
-
 # C extensions
 *.so
 
 # Distribution / packaging
 .Python
+build/
 develop-eggs/
 dist/
 downloads/
@@ -129,3 +127,18 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+#vscode
+.vscode
+.idea/inspectionProfiles/profiles_settings.xml
+.idea/misc.xml
+.idea/modules.xml
+.idea/Python-SimConnect.iml
+.idea/vcs.xml
+.idea/workspace.xml
+.DS_Store
+.idea/inspectionProfiles/Project_Default.xml
+.idea/CodeStyles/codeStyleConfig.xml
+.idea/MSFS2020-cockpit-companion.iml
+.idea/MSFS2020-cockpit-companion-master.iml
