@@ -6,6 +6,7 @@
     width="220"
     height="85"
     style="margin: 10px;"
+    :disabled="isDisabled"
     @click="(v) => $emit('click', v)"
   >
     <div style="width: 100%; height: 100%;">
@@ -26,6 +27,10 @@ export default {
     icon: {
       type: String,
       default: 'mdi-airplane',
+    },
+    isDisabled: {
+      type: Boolean,
+      default: false,
     },
   },
 };

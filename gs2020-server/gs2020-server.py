@@ -24,6 +24,8 @@ request_uidata = [
 	'WISKEY_COMPASS_INDICATION_DEGREES',
 	'MAGVAR',
 	'PUSHBACK_AVAILABLE',
+	'PLANE_LATITUDE',
+	'PLANE_LONGITUDE'
 ]
 
 # Internal functions
@@ -82,15 +84,32 @@ def trigger_event(event_name, value_to_use = None):
 # Routes
 
 # Tell the server to connect to SimConnect
-@app.route('/connect'):
-	sm = SimConnect()
-	ae = AircraftEvents(sm)
-	aq = AircraftRequests(sm, _time=10)
+@app.route('/connect')
+def connect():
+	global sm
+	global ae
+	global aq
+	if sm == None:
+		try:
+			sm = SimConnect()
+			ae = AircraftEvents(sm)
+			aq = AircraftRequests(sm, _time=10)
+			return 'success'
+		except:
+			return 'Failed to connect to the Simulator', 500
+	return 'success'
+
+# Get Simconnection status
+@app.route('/status')
+def status():
+	if sm == None:
+		return 'Disconnected', 500
+	return 'Connected'
 
 # Default catch-all route
 @app.route('/', defaults={'path': ''})
 @app.route('/<path:path>')
-def glass():
+def glass(path):
 	return render_template("index.html")
 
 # Fetch a dataset

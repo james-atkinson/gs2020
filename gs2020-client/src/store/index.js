@@ -5,12 +5,9 @@ Vue.use(Vuex);
 
 export default new Vuex.Store({
   state: {
-    simOnGround: true,
-    pushbackState: 3.0,
-    currentHeading: 0,
-    groundVelocity: 0,
-    tugAngle: 0,
-    tugConnected: false,
+    simConnected: false,
+    simErrored: false,
+    simData: {},
   },
   mutations: {
     set(state, payload) {
@@ -20,9 +17,14 @@ export default new Vuex.Store({
   },
   actions: {
     setData({ commit }, payload) {
-      Object.keys(payload).forEach((key) => {
-        commit('set', { key, value: payload[key] });
-      });
+      commit('set', { key: 'simData', value: payload });
+    },
+    setConnected({ commit }) {
+      commit('set', { key: 'simConnected', value: true });
+    },
+    setErrored({ commit }) {
+      commit('set', { key: 'simConnected', value: false });
+      commit('set', { key: 'simErrored', value: true });
     }
   },
   modules: {
