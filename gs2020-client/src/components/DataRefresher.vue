@@ -18,7 +18,8 @@ export default {
     }),
   },
   created() {
-    this.refreshHandle = setInterval(this.refreshData, 10000);
+    this.refreshData();
+    this.refreshHandle = setInterval(this.refreshData, 2000);
   },
   beforeDestroy() {
     clearInterval(this.refreshHandle);
@@ -28,7 +29,9 @@ export default {
       if (this.simConnected && !this.simErrored) {
         try {
           const data = await simRequests.getDataset('uidata');
-          this.$store.dispatch('setData', data);
+          if (data.PLANE_LATITUDE !== null && data.PLANE_LONGITUDE !== null && data.WISKEY_COMPASS_INDICATION_DEGREES !== null) {
+            this.$store.dispatch('setData', data);
+          }
         } catch (e) {
           console.error(`Error fetching data: ${e}`);
           this.$store.dispatch('setErrored');
@@ -38,7 +41,7 @@ export default {
       if (!this.simConnected || this.simErrored) {
         try {
           await simRequests.connectSim();
-          this.$store.dispatch('simConnected');
+          this.$store.dispatch('setConnected');
         } catch(e) {
           console.error(`Error attempting sim reconnection ${e}`);
         }

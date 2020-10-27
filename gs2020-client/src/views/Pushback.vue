@@ -23,7 +23,7 @@
           <v-tab-item
             value="planned"
           >
-            <v-container fluid no-gutters>
+            <v-container fluid no-gutters v-show="!pushbackActive">
               <v-row no-gutters centered>
                 <v-col cols="3"></v-col>
                 <v-col cols="2">
@@ -57,9 +57,9 @@
                 </v-col>
                 <v-col cols="3"></v-col>
               </v-row>
-              <v-row no-gutters centered>
+              <v-row no-gutters centered v-if="canStartPlannedPushback">
                 <v-col cols="12">
-                  <v-btn color="primary" @click="togglePushback" dark>Start!</v-btn>
+                  <v-btn color="primary" @click="startPlannedPushback" dark>Start!</v-btn>
                 </v-col>
               </v-row>
               <v-row no-gutters align-end>
@@ -70,6 +70,17 @@
                     dense
                     width="24%"
                   />
+                </v-col>
+              </v-row>
+            </v-container>
+            <v-container v-show="pushbackActive">
+              <v-row>
+                <v-col cols="12">
+                  Pushback In Progress - DO NOT CLOSE THIS WINDOW, IT IS MANAGING YOUR PUSHBACK<br />
+                  Distance so far: {{ pushbackDistanceTravelled }} ft.<br />
+                  Target Distance: {{ pushbackRequestDistance }} <br />
+                  Current Heading: {{ simData.WISKEY_COMPASS_INDICATION_DEGREES }} <br />
+                  Target Heading: {{ startLocation.targetHeading }}<br />
                 </v-col>
               </v-row>
             </v-container>
@@ -102,19 +113,23 @@ export default {
   },
   data: () => ({
     autoParkingBrake: false,
+    pushbackActive: false,
     pushbackRequestDistance: 10,
     pushbackRequestAngle: 90,
     pushbackRequestDirection: 'Straight',
     pushbackState: PUSHBACK_STOPPED,
+    pushbackDistanceTravelled: 0,
+    pushbackWatcherHandle: null,
     startLocation: {},
     tab: null,
   }),
   computed: {
     ...mapState({
       simData: state => state.simData,
-      currentLatitude: state => state.simData.PLANE_LATITUDE,
-      currentLongitude: state => state.simData.PLANE_LONGITUDE,
     }),
+    canStartPlannedPushback() {
+      return this.simData && this.simData.PLANE_LATITUDE && this.simData.PLANE_LONGITUDE
+    },
     isPushbackStarted() {
       return this.simData && this.simData.PUSHBACK_STATE && this.simData.PUSHBACK_STATE !== PUSHBACK_STOPPED;
     },
@@ -123,46 +138,98 @@ export default {
     },
   },
   methods: {
-    async getNewTugHeading(direction = null) {
-      const currentState = await simRequests.getDataset('aircraft');
+    calculateHeading(direction, changeValue, includeVariation = true) {
+      console.log('direction: ', direction);
+      console.log('change: ', changeValue);
+      console.log('includeVariation: ', includeVariation);
+      const currentState = this.simData;
       const currentAngle = parseInt(currentState.WISKEY_COMPASS_INDICATION_DEGREES);
       const variation = parseInt(currentState.MAGVAR);
-      let newAngle = currentAngle + variation;
+      let newAngle = includeVariation ? currentAngle + variation : currentAngle;
 
-      if (currentAngle !== null && direction !== null)  {
-        newAngle = direction === 'left' ? currentAngle + 90 : currentAngle - 90;
+      if (currentAngle !== null && direction !== null && direction !== 'straight')  {
+        newAngle = direction === 'left' ? currentAngle - changeValue : currentAngle + changeValue;
         if(newAngle < 0) {
           newAngle =  360 + newAngle;
         } else if(newAngle > 360) {
-          newAngle -= 360;
+          newAngle = newAngle - 360;
         }
       }
-      
+
+      return newAngle;
+    },
+    getNewTugHeading(direction = null, targetAngle = 90) {
+      const newAngle = this.calculateHeading(direction, targetAngle);
       const newTugHeading = (4294967295 / 360) * newAngle;
       return newTugHeading;
     },
     async togglePushback() {
-      console.log(calculateHaversine(53.7691644, -112.8070943, 53.7691644, -112.8070943));
-      /*try {
+      try {
         const pushbackStartRequest = await simRequests.sendEvent('TOGGLE_PUSHBACK');
-        console.log(pushbackStartRequest)
-        this.startLocation = {
-          latitude: this.currentLatitude,
-          longitude: this.currentLongitude,
-        }
+        clearInterval(this.pushbackWatcherHandle);
+        this.pushbackActive = !this.pushbackActive;
       } catch (e) {
         console.error(`Error sending TOGGLE_PUSHBACK event ${e}`);
         this.$store.dispatch('setErrored');
-      }*/
+      }
     },
     async setPushbackLeft() {
-      const eventResponse = await simRequests.sendEvent('KEY_TUG_HEADING', await this.getNewTugHeading('left'));
+      const eventResponse = await simRequests.sendEvent('KEY_TUG_HEADING', this.getNewTugHeading('left'));
     },
     async setPushbackStraight() {
-      const eventResponse = await simRequests.sendEvent('KEY_TUG_HEADING', await this.getNewTugHeading());
+      const eventResponse = await simRequests.sendEvent('KEY_TUG_HEADING', this.getNewTugHeading());
     },
     async setPushbackRight() {
-      const eventResponse = await simRequests.sendEvent('KEY_TUG_HEADING', await this.getNewTugHeading('right'));
+      const eventResponse = await simRequests.sendEvent('KEY_TUG_HEADING', this.getNewTugHeading('right'));
+    },
+    async startPlannedPushback() {
+      try {
+        const pushbackStartRequest = await simRequests.sendEvent('TOGGLE_PUSHBACK');
+        if (pushbackStartRequest && pushbackStartRequest.data === 'success') {
+          this.pushbackActive = true;
+          this.startLocation = {
+            latitude: this.simData.PLANE_LATITUDE,
+            longitude: this.simData.PLANE_LONGITUDE,
+            targetHeading: this.calculateHeading(this.pushbackRequestDirection.toLowerCase(), this.pushbackRequestAngle, false),
+          }
+
+          this.pushbackWatcherHandle = setInterval(() => { this.pushbackWatcher.call(this) }, 2200);
+        }
+      } catch (e) {
+        console.error(`Error starting planned pushback ${e}`);
+        this.pushbackActive = false;
+      }
+    },
+    pushbackWatcher() {
+      const currentHeading = parseInt(this.simData.WISKEY_COMPASS_INDICATION_DEGREES);
+
+      if (this.startLocation && this.startLocation.latitude && this.startLocation.longitude) {
+        this.pushbackDistanceTravelled = Math.floor(calculateHaversine(this.startLocation.latitude, this.startLocation.longitude, this.simData.PLANE_LATITUDE, this.simData.PLANE_LONGITUDE));
+      }
+
+      if (this.pushbackDistanceTravelled >= this.pushbackRequestDistance) {
+        if (this.pushbackRequestDirection) {
+          const headingDiff = Math.abs(currentHeading - this.startLocation.targetHeading);
+          console.log('running watcher', currentHeading, this.startLocation.targetHeading, headingDiff);
+          if (headingDiff < 3) {
+            this.togglePushback();
+            clearInterval(this.pushbackWatcherHandle);
+            this.pushbackWatcherHandle = null;
+            return;
+          }
+
+          if(this.pushbackRequestDirection === 'Left') {
+            this.setPushbackLeft();
+          } else {
+            this.setPushbackRight();
+          }
+        } else {
+          this.togglePushback();
+          clearInterval(this.pushbackWatcherHandle);
+          this.pushbackWatcherHandle = null;
+          return;
+        }
+      }
     },
   },
 };
