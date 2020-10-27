@@ -8,16 +8,12 @@ import sys
 app = Flask(__name__)
 CORS(app)
 
-# SIMCONNECTION RELATED STARTUPS
+# SimConnect connection variables
+sm = None
+ae = None
+aq = None
 
-# Create simconnection
-sm = SimConnect()
-ae = AircraftEvents(sm)
-aq = AircraftRequests(sm, _time=10)
-
-# Create request holders
-
-
+# Requestable DataSets
 request_uidata = [
 	'SIM_ON_GROUND',
 	'PUSHBACK_STATE',
@@ -30,34 +26,11 @@ request_uidata = [
 	'PUSHBACK_AVAILABLE',
 ]
 
-def thousandify(x):
-	return f"{x:,}"
-
-
-@app.route('/')
-def glass():
-	return render_template("index.html")
-
-
-@app.route('/attitude-indicator')
-def AttInd():
-	return render_template("attitude-indicator/index.html")
-
-
+# Internal functions
 def get_dataset(data_type):
 	if data_type == "uidata": request_to_action = request_uidata
 
 	return request_to_action
-
-
-@app.route('/dataset/<dataset_name>/', methods=["GET"])
-def output_json_dataset(dataset_name):
-	dataset_map = {}  #I have renamed map to dataset_map as map is used elsewhere
-	data_dictionary = get_dataset(dataset_name)
-	for datapoint_name in data_dictionary:
-		dataset_map[datapoint_name] = aq.get(datapoint_name)
-	return jsonify(dataset_map)
-
 
 def get_datapoint(datapoint_name, index=None):
 	# This function actually does the work of getting the datapoint
@@ -68,22 +41,6 @@ def get_datapoint(datapoint_name, index=None):
 			dp.setIndex(int(index))
 
 	return aq.get(datapoint_name)
-
-
-@app.route('/datapoint/<datapoint_name>/get', methods=["GET"])
-def get_datapoint_endpoint(datapoint_name):
-	# This is the http endpoint wrapper for getting a datapoint
-
-	ds = request.get_json() if request.is_json else request.form
-	index = ds.get('index')
-
-	output = get_datapoint(datapoint_name, index)
-
-	if isinstance(output, bytes):
-		output = output.decode('ascii')
-
-	return jsonify(output)
-
 
 def set_datapoint(datapoint_name, index=None, value_to_use=None):
 	# This function actually does the work of setting the datapoint
@@ -106,20 +63,6 @@ def set_datapoint(datapoint_name, index=None, value_to_use=None):
 
 	return status
 
-
-@app.route('/datapoint/<datapoint_name>/set', methods=["POST"])
-def set_datapoint_endpoint(datapoint_name):
-	# This is the http endpoint wrapper for setting a datapoint
-
-	ds = request.get_json() if request.is_json else request.form
-	index = ds.get('index')
-	value_to_use = ds.get('value_to_use')
-
-	status = set_datapoint (datapoint_name, index, value_to_use)
-
-	return jsonify(status)
-
-
 def trigger_event(event_name, value_to_use = None):
 	# This function actually does the work of triggering the event
 
@@ -136,11 +79,56 @@ def trigger_event(event_name, value_to_use = None):
 
 	return status
 
+# Routes
 
+# Tell the server to connect to SimConnect
+@app.route('/connect'):
+	sm = SimConnect()
+	ae = AircraftEvents(sm)
+	aq = AircraftRequests(sm, _time=10)
+
+# Default catch-all route
+@app.route('/', defaults={'path': ''})
+@app.route('/<path:path>')
+def glass():
+	return render_template("index.html")
+
+# Fetch a dataset
+@app.route('/dataset/<dataset_name>/', methods=["GET"])
+def output_json_dataset(dataset_name):
+	dataset_map = {}
+	data_dictionary = get_dataset(dataset_name)
+	for datapoint_name in data_dictionary:
+		dataset_map[datapoint_name] = aq.get(datapoint_name)
+	return jsonify(dataset_map)
+
+# Fetch a datapoint
+@app.route('/datapoint/<datapoint_name>/get', methods=["GET"])
+def get_datapoint_endpoint(datapoint_name):
+	ds = request.get_json() if request.is_json else request.form
+	index = ds.get('index')
+
+	output = get_datapoint(datapoint_name, index)
+
+	if isinstance(output, bytes):
+		output = output.decode('ascii')
+
+	return jsonify(output)
+
+# Set a datapoint
+@app.route('/datapoint/<datapoint_name>/set', methods=["POST"])
+def set_datapoint_endpoint(datapoint_name):
+	ds = request.get_json() if request.is_json else request.form
+	index = ds.get('index')
+	value_to_use = ds.get('value_to_use')
+
+	status = set_datapoint (datapoint_name, index, value_to_use)
+
+	return jsonify(status)
+
+# Trigger an event
 @app.route('/event/<event_name>/trigger', methods=["POST"])
 def trigger_event_endpoint(event_name):
-	# This is the http endpoint wrapper for triggering an event
-
 	ds = request.get_json() if request.is_json else request.form
 	value_to_use = ds.get('value_to_use')
 
