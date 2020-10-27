@@ -7,6 +7,7 @@
 </template>
 
 <script>
+import simRequests from '../lib/simRequests';
 import BigButton from './BigButton';
 
 export default {
@@ -29,8 +30,12 @@ export default {
     gotoGroundServices() {
       this.$route.name !== 'GroundServices' && this.$router.push({ name: 'GroundServices' });
     },
-    toggleJetway() {
-      this.jetwayStatus = !this.jetwayStatus;
+    async toggleJetway() {
+      const toggleResult = await simRequests.sendEvent('TOGGLE_JETWAY');
+      console.log('toggleResult: ', toggleResult);
+      if (toggleResult && toggleResult.data === 'success') {
+        this.jetwayStatus = !this.jetwayStatus;
+      }
     },
   },
 };
