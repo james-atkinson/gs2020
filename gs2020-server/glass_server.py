@@ -18,83 +18,17 @@ aq = AircraftRequests(sm, _time=10)
 # Create request holders
 
 
-request_aircraft = [
+request_uidata = [
 	'SIM_ON_GROUND',
-	'PLANE_LATITUDE',
-	'PLANE_LONGITUDE',
-	'PLANE_HEADING_DEGREES_TRUE',
-	'PLANE_HEADING_DEGREES_MAGNETIC',
-	'BRAKE_PARKING_POSITION',
-	'GROUND_VELOCITY',
 	'PUSHBACK_STATE',
-	'PUSHBACK_ANGLE',
-	'PUSHBACK_CONTACTX',
-	'PUSHBACK_CONTACTY',
-	'PUSHBACK_CONTACTZ',
-	'PUSHBACK_WAIT',
-	'PUSHBACK_AVAILABLE',
+	'JETWAY_MOVING',
+	'FUELTRUCK_HOSE_DEPLOYED',
+	'GROUND_VELOCITY',
+	'BRAKE_PARKING_POSITION',
 	'WISKEY_COMPASS_INDICATION_DEGREES',
 	'MAGVAR',
+	'PUSHBACK_AVAILABLE',
 ]
-
-request_pushback = [
-	'PUSHBACK_STATE',
-	'PUSHBACK_ANGLE',
-	'PUSHBACK_CONTACTX',
-	'PUSHBACK_CONTACTY',
-	'PUSHBACK_CONTACTZ',
-	'PUSHBACK_WAIT',
-]
-
-request_fuel = [
-	'FUEL_TANK_CENTER_LEVEL',  # Percent of maximum capacity
-	'FUEL_TANK_CENTER2_LEVEL',  # Percent of maximum capacity
-	'FUEL_TANK_CENTER3_LEVEL',  # Percent of maximum capacity
-	'FUEL_TANK_LEFT_MAIN_LEVEL',  # Percent of maximum capacity
-	'FUEL_TANK_LEFT_AUX_LEVEL',  # Percent of maximum capacity
-	'FUEL_TANK_LEFT_TIP_LEVEL',  # Percent of maximum capacity
-	'FUEL_TANK_RIGHT_MAIN_LEVEL',  # Percent of maximum capacity
-	'FUEL_TANK_RIGHT_AUX_LEVEL',  # Percent of maximum capacity
-	'FUEL_TANK_RIGHT_TIP_LEVEL',  # Percent of maximum capacity
-	'FUEL_TANK_EXTERNAL1_LEVEL',  # Percent of maximum capacity
-	'FUEL_TANK_EXTERNAL2_LEVEL',  # Percent of maximum capacity
-	'FUEL_TANK_CENTER_CAPACITY',  # Maximum capacity in volume
-	'FUEL_TANK_CENTER2_CAPACITY',  # Maximum capacity in volume
-	'FUEL_TANK_CENTER3_CAPACITY',  # Maximum capacity in volume
-	'FUEL_TANK_LEFT_MAIN_CAPACITY',  # Maximum capacity in volume
-	'FUEL_TANK_LEFT_AUX_CAPACITY',  # Maximum capacity in volume
-	'FUEL_TANK_LEFT_TIP_CAPACITY',  # Maximum capacity in volume
-	'FUEL_TANK_RIGHT_MAIN_CAPACITY',  # Maximum capacity in volume
-	'FUEL_TANK_RIGHT_AUX_CAPACITY',  # Maximum capacity in volume
-	'FUEL_TANK_RIGHT_TIP_CAPACITY',  # Maximum capacity in volume
-	'FUEL_TANK_EXTERNAL1_CAPACITY',  # Maximum capacity in volume
-	'FUEL_TANK_EXTERNAL2_CAPACITY',  # Maximum capacity in volume
-	'FUEL_LEFT_CAPACITY',  # Maximum capacity in volume
-	'FUEL_RIGHT_CAPACITY',  # Maximum capacity in volume
-	'FUEL_TANK_CENTER_QUANTITY',  # Current quantity in volume
-	'FUEL_TANK_CENTER2_QUANTITY',  # Current quantity in volume
-	'FUEL_TANK_CENTER3_QUANTITY',  # Current quantity in volume
-	'FUEL_TANK_LEFT_MAIN_QUANTITY',  # Current quantity in volume
-	'FUEL_TANK_LEFT_AUX_QUANTITY',  # Current quantity in volume
-	'FUEL_TANK_LEFT_TIP_QUANTITY',  # Current quantity in volume
-	'FUEL_TANK_RIGHT_MAIN_QUANTITY',  # Current quantity in volume
-	'FUEL_TANK_RIGHT_AUX_QUANTITY',  # Current quantity in volume
-	'FUEL_TANK_RIGHT_TIP_QUANTITY',  # Current quantity in volume
-	'FUEL_TANK_EXTERNAL1_QUANTITY',  # Current quantity in volume
-	'FUEL_TANK_EXTERNAL2_QUANTITY',  # Current quantity in volume
-	'FUEL_LEFT_QUANTITY',  # Current quantity in volume
-	'FUEL_RIGHT_QUANTITY',  # Current quantity in volume
-	'FUEL_TOTAL_QUANTITY',  # Current quantity in volume
-	'FUEL_WEIGHT_PER_GALLON',  # Fuel weight per gallon
-	'FUEL_TOTAL_CAPACITY',  # Total capacity of the aircraft
-	'FUEL_SELECTED_QUANTITY_PERCENT',  # Percent or capacity for selected tank
-	'FUEL_SELECTED_QUANTITY',  # Quantity of selected tank
-	'FUEL_TOTAL_QUANTITY_WEIGHT',  # Current total fuel weight of the aircraft
-	'NUM_FUEL_SELECTORS',  # Number of selectors on the aircraft
-	'UNLIMITED_FUEL',  # Unlimited fuel flag
-	'ESTIMATED_FUEL_FLOW',  # Estimated fuel flow at cruise
-]
-
 
 def thousandify(x):
 	return f"{x:,}"
@@ -111,9 +45,7 @@ def AttInd():
 
 
 def get_dataset(data_type):
-	if data_type == "aircraft": request_to_action = request_aircraft
-	if data_type == "pushback" : request_to_action = request_pushback
-	if data_type == "fuel": request_to_action = request_fuel
+	if data_type == "uidata": request_to_action = request_uidata
 
 	return request_to_action
 
