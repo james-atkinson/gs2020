@@ -1,5 +1,5 @@
 <template>
-  <v-card>  
+  <v-card>
     <v-card-text v-show="showPushbackForm">
       <v-tabs
         v-model="tab"
@@ -36,7 +36,7 @@
                     class="ml-1 mr-1"
                   />
                 </v-col>
-                <v-col cols="2">  
+                <v-col cols="2">
                   <v-select
                     v-model="pushbackRequestDirection"
                     :items="['Left', 'Right', 'Straight']"
@@ -56,9 +56,14 @@
                     dense
                     outlined
                     class="ml-1 mr-1"
-                  /> 
+                  />
                 </v-col>
                 <v-col cols="3"></v-col>
+              </v-row>
+              <v-row no-gutters centered v-if="simData.TITLE">
+                <v-col cols="12">
+                  <span class="caption">For reference your <strong>{{ aircrafttName }}</strong> is <strong>{{ aircraftLength }}</strong> feet long.</span>
+                </v-col>
               </v-row>
               <v-row no-gutters align-end>
                 <v-col cols="4"></v-col>
@@ -85,7 +90,7 @@
                   <v-progress-linear
                     color="deep-purple"
                     rounded
-                    indeterminate 
+                    indeterminate
                   ></v-progress-linear>
                 </v-col>
               </v-row>
@@ -159,6 +164,12 @@ export default {
     ...mapState({
       simData: state => state.simData,
     }),
+    aircraftName() {
+      return 'A320';
+    },
+    aircraftLength() {
+      return '123.5';
+    },
     canStartPlannedPushback() {
       return this.simData && this.simData.PLANE_LONGITUDE
     },
@@ -205,7 +216,7 @@ export default {
         this.pushbackType = this.isPushbackStarted ? null : 'manual';
         const pushbackStartRequest = await simRequests.sendEvent('TOGGLE_PUSHBACK');
         clearInterval(this.pushbackWatcherHandle);
-        
+
       } catch (e) {
         console.error(`Error sending TOGGLE_PUSHBACK event ${e}`);
         this.$store.dispatch('setErrored');
@@ -223,9 +234,9 @@ export default {
     async startPlannedPushback() {
       try {
         const pushbackStartRequest = await simRequests.sendEvent('TOGGLE_PUSHBACK');
-        
+
         this.autoParkingBrake && await simRequests.sendEvent('PARKING_BRAKES');
-        
+
         if (pushbackStartRequest && pushbackStartRequest.data === 'success') {
           this.pushbackActive = true;
           this.startLocation = {
