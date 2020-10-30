@@ -1,6 +1,6 @@
 <template>
   <v-card>  
-    <v-card-text>
+    <v-card-text v-show="showPushbackForm">
       <v-tabs
         v-model="tab"
         dark
@@ -23,7 +23,7 @@
           <v-tab-item
             value="planned"
           >
-            <v-container fluid no-gutters v-show="!pushbackActive">
+            <v-container fluid no-gutters v-show="!isPushbackStarted" class="mt-2">
               <v-row no-gutters centered>
                 <v-col cols="3"></v-col>
                 <v-col cols="2">
@@ -33,6 +33,7 @@
                     persistent-hint
                     outlined
                     dense
+                    class="ml-1 mr-1"
                   />
                 </v-col>
                 <v-col cols="2">  
@@ -43,44 +44,74 @@
                     persistent-hint
                     dense
                     outlined
+                    class="ml-1 mr-1"
                   />
                 </v-col>
                 <v-col cols="2">
                   <v-text-field
                     v-model="pushbackRequestAngle"
-                    v-show="pushbackRequestDirection !== 'Straight'"
+                    :disabled="pushbackRequestDirection === 'Straight'"
                     hint="Turn Angle"
                     persistent-hint
                     dense
                     outlined
+                    class="ml-1 mr-1"
                   /> 
                 </v-col>
                 <v-col cols="3"></v-col>
               </v-row>
-              <v-row no-gutters centered v-if="canStartPlannedPushback">
+              <v-row no-gutters align-end>
+                <v-col cols="4"></v-col>
+                <v-col cols="4" centered>
+                  <v-switch
+                    v-model="autoParkingBrake"
+                    label="Automate Parking Brake"
+                    color="primary"
+                  />
+                </v-col>
+                <v-col cols="4"></v-col>
+              </v-row>
+              <v-row no-gutters centered v-if="canStartPlannedPushback && !isPushbackStarted">
                 <v-col cols="12">
                   <v-btn color="primary" @click="startPlannedPushback" dark>Start!</v-btn>
                 </v-col>
               </v-row>
-              <v-row no-gutters align-end>
-                <v-col cols="12" centered>
-                  <v-switch
-                    v-model="autoParkingBrake"
-                    label="Automate Parking Brake"
-                    dense
-                    width="24%"
-                  />
+            </v-container>
+
+            <v-container v-show="isPushbackStarted ">
+              <v-row no-gutters centered>
+                <v-col cols="12">
+                  <span>Pushback In Progress!</span><br />
+                  <v-progress-linear
+                    color="deep-purple"
+                    rounded
+                    indeterminate 
+                  ></v-progress-linear>
                 </v-col>
               </v-row>
-            </v-container>
-            <v-container v-show="pushbackActive">
-              <v-row>
-                <v-col cols="12">
-                  Pushback In Progress - DO NOT CLOSE THIS WINDOW, IT IS MANAGING YOUR PUSHBACK<br />
-                  Distance so far: {{ pushbackDistanceTravelled }} ft.<br />
-                  Target Distance: {{ pushbackRequestDistance }} <br />
-                  Current Heading: {{ simData.WISKEY_COMPASS_INDICATION_DEGREES }} <br />
-                  Target Heading: {{ startLocation.targetHeading }}<br />
+              <v-row no-gutters class="mt-1">
+                <v-col cols="12" centered>
+                  Requested Distance: {{ pushbackRequestDistance }} | Distance Pushed: {{ pushbackDistanceTravelled }}
+                </v-col>
+              </v-row>
+              <v-row no-gutters class="mt-1">
+                <v-col cols="12" centered>
+                  Requested Angle: {{ pushbackRequestAngle }} | Current Angle: {{ parseInt(simData.WISKEY_COMPASS_INDICATION_DEGREES) }}
+                </v-col>
+              </v-row>
+              <v-row no-gutters class="mt-1">
+                <v-col cols="12" centered>
+                  <v-btn
+                    color="primary"
+                    @click="togglePushback"
+                  >
+                    Stop Now!
+                  </v-btn>
+                </v-col>
+              </v-row>
+              <v-row no-gutters class="mt-1">
+                <v-col cols="12" centered>
+                  <span>You may close this window now, your pushback will continue to be managed.</span>
                 </v-col>
               </v-row>
             </v-container>
@@ -94,6 +125,9 @@
         </v-tabs-items>
       </v-tabs>
     </v-card-text>
+    <v-card-text v-show="!showPushbackForm">
+      Pushback only available when engines are off.
+    </v-card-text>
   </v-card>
 </template>
 
@@ -103,8 +137,8 @@ import simRequests from '../lib/simRequests';
 import calculateHaversine from '../lib/calculateHaversine';
 import BigButton from '../components/BigButton';
 
-const PUSHBACK_STOPPED = 3.0;
-const PUSHBACK_STARTED = 0.0;
+const PUSHBACK_STOPPED = 3;
+const PUSHBACK_STARTED = 0;
 
 export default {
   name: 'Home',
@@ -112,12 +146,10 @@ export default {
     BigButton,
   },
   data: () => ({
-    autoParkingBrake: false,
-    pushbackActive: false,
-    pushbackRequestDistance: 10,
+    autoParkingBrake: true,
+    pushbackRequestDistance: 200,
     pushbackRequestAngle: 90,
     pushbackRequestDirection: 'Straight',
-    pushbackState: PUSHBACK_STOPPED,
     pushbackDistanceTravelled: 0,
     pushbackWatcherHandle: null,
     startLocation: {},
@@ -128,20 +160,25 @@ export default {
       simData: state => state.simData,
     }),
     canStartPlannedPushback() {
-      return this.simData && this.simData.PLANE_LATITUDE && this.simData.PLANE_LONGITUDE
+      return this.simData && this.simData.PLANE_LONGITUDE
     },
     isPushbackStarted() {
-      return this.simData && this.simData.PUSHBACK_STATE && this.simData.PUSHBACK_STATE !== PUSHBACK_STOPPED;
+      return this.simData && this.simData.PUSHBACK_STATE !== 3;
+    },
+    isEngineRunning() {
+      return this.simData['GENERAL_ENG_COMBUSTION:1'] || this.simData['GENERAL_ENG_COMBUSTION:2'] || this.simData['GENERAL_ENG_COMBUSTION:3'] || this.simData['GENERAL_ENG_COMBUSTION:4'];
     },
     manualButtonText() {
       return this.isPushbackStarted ? 'Stop Pushback' : 'Start Pushback';
     },
+    showPushbackForm() {
+      return this.isPushbackStarted
+        ? true
+        : !this.isEngineRunning;
+    },
   },
   methods: {
     calculateHeading(direction, changeValue, includeVariation = true) {
-      console.log('direction: ', direction);
-      console.log('change: ', changeValue);
-      console.log('includeVariation: ', includeVariation);
       const currentState = this.simData;
       const currentAngle = parseInt(currentState.WISKEY_COMPASS_INDICATION_DEGREES);
       const variation = parseInt(currentState.MAGVAR);
@@ -165,9 +202,10 @@ export default {
     },
     async togglePushback() {
       try {
+        this.pushbackType = this.isPushbackStarted ? null : 'manual';
         const pushbackStartRequest = await simRequests.sendEvent('TOGGLE_PUSHBACK');
         clearInterval(this.pushbackWatcherHandle);
-        this.pushbackActive = !this.pushbackActive;
+        
       } catch (e) {
         console.error(`Error sending TOGGLE_PUSHBACK event ${e}`);
         this.$store.dispatch('setErrored');
@@ -185,6 +223,9 @@ export default {
     async startPlannedPushback() {
       try {
         const pushbackStartRequest = await simRequests.sendEvent('TOGGLE_PUSHBACK');
+        
+        this.autoParkingBrake && await simRequests.sendEvent('PARKING_BRAKES');
+        
         if (pushbackStartRequest && pushbackStartRequest.data === 'success') {
           this.pushbackActive = true;
           this.startLocation = {
@@ -210,11 +251,11 @@ export default {
       if (this.pushbackDistanceTravelled >= this.pushbackRequestDistance) {
         if (this.pushbackRequestDirection) {
           const headingDiff = Math.abs(currentHeading - this.startLocation.targetHeading);
-          console.log('running watcher', currentHeading, this.startLocation.targetHeading, headingDiff);
           if (headingDiff < 3) {
             this.togglePushback();
             clearInterval(this.pushbackWatcherHandle);
             this.pushbackWatcherHandle = null;
+            this.autoParkingBrake && simRequests.sendEvent('PARKING_BRAKES');
             return;
           }
 
@@ -227,6 +268,7 @@ export default {
           this.togglePushback();
           clearInterval(this.pushbackWatcherHandle);
           this.pushbackWatcherHandle = null;
+          this.autoParkingBrake && simRequests.sendEvent('PARKING_BRAKES');
           return;
         }
       }

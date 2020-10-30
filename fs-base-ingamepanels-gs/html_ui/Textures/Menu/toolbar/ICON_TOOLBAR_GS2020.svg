@@ -2,7 +2,8 @@
   <title>ICON_TOOLBAR_GS2020</title>
   <g id="HIGHLIGHT">
   <g>
-    <text stroke="#000" transform="matrix(23.687966200844176,0,0,23.687966200844176,-3606.968369974803,-6028.452473488555) " xml:space="preserve" text-anchor="start" font-family="Oswald, sans-serif" font-size="24" id="svg_1" y="276.17737" x="151.61229" stroke-width="0" fill="#000000">GS</text>
+    <text fill="#ffffff" stroke-width="0" x="7.01885" y="23.84847" id="svg_1" font-size="27" font-family="Helvetica, Arial, sans-serif" text-anchor="start" xml:space="preserve" font-weight="bold" transform="matrix(8.661192659771016,0,0,7.772813066162654,-41.689212012774355,18.495492942239753) " stroke="#000">GS</text>
+    <text stroke="#000" transform="matrix(6.4878549575805655,0,0,5.0740742683410645,-100.52531671524048,-1067.290557719767) " fill="#ffffff" stroke-width="0" x="18.5" y="271.45313" id="svg_2" font-size="24" font-family="Helvetica, Arial, sans-serif" text-anchor="start" xml:space="preserve" font-weight="bold">2020</text>
   </g>
   </g>
 </svg>

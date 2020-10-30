@@ -2,7 +2,7 @@
   <v-container fluid no-gutters>
     <v-row no-gutters>
       <v-col cols="12">
-        <BigButton :buttonText="jetwayText" :icon="jetwayIcon" @click="toggleJetway"/>
+        <BigButton buttonText="Toggle Jetway" :icon="jetwayIcon" @click="toggleJetway"/>
         <BigButton :buttonText="fuelTruckText" :icon="fuelTruckIcon" :is-disabled="fuelTruckCalled || fuelTruckHoseDeployed" @click="toggleFuelTruck"/>
       </v-col>
     </v-row>

@@ -13,9 +13,17 @@ export default new Vuex.Store({
     set(state, payload) {
       const { key, value } = payload;
       Vue.set(state, key, value);
-    }
+    },
+    setSimVar(state, payload) {
+      const { key, value } = payload;
+      Vue.set(state.simData, key, value);
+    },
   },
   actions: {
+    setSimDataVar({ commit }, payload) {
+      const { key, value } = payload;
+      commit('setSimVar', { key, value });
+    },
     setData({ commit }, payload) {
       commit('set', { key: 'simData', value: payload });
     },

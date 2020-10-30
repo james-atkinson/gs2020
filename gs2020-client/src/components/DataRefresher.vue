@@ -29,9 +29,10 @@ export default {
       if (this.simConnected && !this.simErrored) {
         try {
           const data = await simRequests.getDataset('uidata');
-          if (data.PLANE_LATITUDE !== null && data.PLANE_LONGITUDE !== null && data.WISKEY_COMPASS_INDICATION_DEGREES !== null) {
-            this.$store.dispatch('setData', data);
-          }
+          Object.keys(data).forEach((key) => {
+            const dataPoint = data[key];
+            dataPoint !== null && this.$store.dispatch('setSimDataVar', { key, value: data[key] });
+          })
         } catch (e) {
           console.error(`Error fetching data: ${e}`);
           this.$store.dispatch('setErrored');
