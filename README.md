@@ -33,18 +33,19 @@ Ground Services 2020 is a 2 part application, however only the GS2020 server is 
     * Click on watched bases, your community folder will be listed here.
 
 # Usage
-Usage is simple, open your GS2020 folder and run **gs2020-server.exe**. It will open a terminal window and display some debugging text. You can minimize this window.
-
 **IMPORTANT:** If you plan to use the in-game panel you **MUST** start GS2020 server **BEFORE** you start a new flight in MSFS 2020, the in-game panel will not work if the server is started after the flight.
+Usage is simple, open your GS2020 folder and run **gs2020-server.exe**. This will open a terminal window and display some debugging text. You can minimize this window.
 
-If you are not using the in-game panel open a browser window an navigate to (http://localhost:5000)
+### Without the in-game panel
+Open a browser (Chrome, Edge, Firefox etc.) and navigate to: (http://localhost:5000)
 
-Follow the instructions on the screen.
-
-Enjoy!
+### With in-game panel
+Start a flight and move your mouse to the bar at the top of the screen (the one that has ATC, VFR map etc.).
+If you don't see a **GS20202** icon click on settings and enable Ground Services 2020
+Open the **GS2020** panel and enjoy!
 
 # Contributing
-GS2020 is an open source application, if you wish to contibute to it's development fork the repository at (https://github.com/james-atkinson/gs2020), make your changes, and submit a pull request.
+GS2020 is an open source application, if you wish to contibute to its development fork the repository at (https://github.com/james-atkinson/gs2020), make your changes, and submit a pull request.
 
 # License
 GNU GENERAL PUBLIC LICENSE Version 3
