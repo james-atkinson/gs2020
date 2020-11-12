@@ -8,6 +8,10 @@ import sys
 app = Flask(__name__)
 CORS(app)
 
+import logging
+log = logging.getLogger('werkzeug')
+log.setLevel(logging.ERROR)
+
 # SimConnect connection variables
 sm = None
 ae = None
@@ -161,4 +165,4 @@ def trigger_event_endpoint(event_name):
 
 	return jsonify(status)
 
-app.run(host='0.0.0.0', port=5000, debug=True)
+app.run(host='0.0.0.0', port=5000, debug=False)

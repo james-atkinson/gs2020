@@ -19,7 +19,7 @@ export default {
   },
   created() {
     this.refreshData();
-    this.refreshHandle = setInterval(this.refreshData, 2000);
+    this.refreshHandle = setInterval(this.refreshData, 500);
   },
   beforeDestroy() {
     clearInterval(this.refreshHandle);
